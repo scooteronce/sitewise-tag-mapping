@@ -1,0 +1,9 @@
+stream_alias,site,area,line,equipment,equipment_type,property
+/slc-kep01/Channel1/Press01/N7_42_TT01,slc,stamping,line3,press01,press,oil_temperature
+/slc-kep01/Channel1/Press01/Hyd_Press_PSI,slc,stamping,line3,press01,press,hydraulic_pressure
+/slc-kep01/Channel1/Press01/Motor_Amps_RAW,slc,stamping,line3,press01,press,motor_current
+/slc-kep01/Channel1/Press01/CycleCnt,slc,stamping,line3,press01,press,cycle_count
+/slc-kep01/Channel1/Press02/TT_OIL,slc,stamping,line3,press02,press,oil_temperature
+/slc-kep01/Channel1/Press02/HYD_P,slc,stamping,line3,press02,press,hydraulic_pressure
+/slc-kep01/Channel1/Press02/MTR_I,slc,stamping,line3,press02,press,motor_current
+/slc-kep01/Channel1/Press02/CYCLES,slc,stamping,line3,press02,press,cycle_count

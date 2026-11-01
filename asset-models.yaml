@@ -1,0 +1,108 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: ISA-95 asset models for manufacturing tag data
+
+Resources:
+  PressModel:
+    Type: AWS::IoTSiteWise::AssetModel
+    Properties:
+      AssetModelName: Press
+      AssetModelExternalId: model-press
+      AssetModelProperties:
+        - Name: oil_temperature
+          ExternalId: press-oil_temperature
+          DataType: DOUBLE
+          Unit: degF
+          Type: { TypeName: Measurement }
+        - Name: hydraulic_pressure
+          ExternalId: press-hydraulic_pressure
+          DataType: DOUBLE
+          Unit: psi
+          Type: { TypeName: Measurement }
+        - Name: motor_current
+          ExternalId: press-motor_current
+          DataType: DOUBLE
+          Unit: A
+          Type: { TypeName: Measurement }
+        - Name: cycle_count
+          ExternalId: press-cycle_count
+          DataType: INTEGER
+          Unit: count
+          Type: { TypeName: Measurement }
+        - Name: hydraulic_pressure_avg_5m
+          ExternalId: press-hydraulic_pressure_avg_5m
+          DataType: DOUBLE
+          Unit: psi
+          Type:
+            TypeName: Metric
+            Metric:
+              Expression: avg(p)
+              Variables:
+                - Name: p
+                  Value:
+                    PropertyExternalId: press-hydraulic_pressure
+              Window:
+                Tumbling:
+                  Interval: 5m
+        # Parent metrics can only roll up child *metrics*, so the line rollup reads this
+        - Name: oil_temperature_max_5m
+          ExternalId: press-oil_temperature_max_5m
+          DataType: DOUBLE
+          Unit: degF
+          Type:
+            TypeName: Metric
+            Metric:
+              Expression: max(t)
+              Variables:
+                - Name: t
+                  Value:
+                    PropertyExternalId: press-oil_temperature
+              Window:
+                Tumbling:
+                  Interval: 5m
+
+  LineModel:
+    Type: AWS::IoTSiteWise::AssetModel
+    Properties:
+      AssetModelName: Line
+      AssetModelExternalId: model-line
+      AssetModelProperties:
+        - Name: max_oil_temperature_5m
+          ExternalId: line-max_oil_temperature_5m
+          DataType: DOUBLE
+          Unit: degF
+          Type:
+            TypeName: Metric
+            Metric:
+              Expression: max(t)
+              Variables:
+                - Name: t
+                  Value:
+                    HierarchyExternalId: line-presses
+                    PropertyExternalId: press-oil_temperature_max_5m
+              Window:
+                Tumbling:
+                  Interval: 5m
+      AssetModelHierarchies:
+        - Name: presses
+          ExternalId: line-presses
+          ChildAssetModelId: !GetAtt PressModel.AssetModelId
+
+  AreaModel:
+    Type: AWS::IoTSiteWise::AssetModel
+    Properties:
+      AssetModelName: Area
+      AssetModelExternalId: model-area
+      AssetModelHierarchies:
+        - Name: lines
+          ExternalId: area-lines
+          ChildAssetModelId: !GetAtt LineModel.AssetModelId
+
+  SiteModel:
+    Type: AWS::IoTSiteWise::AssetModel
+    Properties:
+      AssetModelName: Site
+      AssetModelExternalId: model-site
+      AssetModelHierarchies:
+        - Name: areas
+          ExternalId: site-areas
+          ChildAssetModelId: !GetAtt AreaModel.AssetModelId
