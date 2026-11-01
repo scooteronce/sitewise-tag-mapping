@@ -13,6 +13,7 @@ Uses the standard AWS credential chain (AWS_PROFILE, AWS_REGION, ...).
 """
 import argparse
 import math
+import os
 import random
 import time
 import zlib
@@ -110,7 +111,8 @@ def main():
     if args.backfill_hours > MAX_BACKFILL_HOURS:
         parser.error(f'--backfill-hours cannot exceed {MAX_BACKFILL_HOURS} (SiteWise 7-day limit)')
 
-    client = boto3.client('iotsitewise')
+    # boto3 only reads AWS_DEFAULT_REGION on its own; also honor AWS_REGION like the CLI does
+    client = boto3.client('iotsitewise', region_name=os.environ.get('AWS_REGION'))
     devices = [d.strip() for d in args.devices.split(',') if d.strip()]
     unknown = set(devices) - set(RAW_TAGS)
     if unknown:

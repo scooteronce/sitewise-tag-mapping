@@ -1,11 +1,13 @@
 # sync_tags.py
 import csv
+import os
 import sys
 
 import boto3
 from botocore.exceptions import ClientError
 
-sw = boto3.client("iotsitewise")
+# boto3 only reads AWS_DEFAULT_REGION on its own; also honor AWS_REGION like the CLI does
+sw = boto3.client("iotsitewise", region_name=os.environ.get("AWS_REGION"))
 
 LEVELS = [
     # (csv column, asset model external ID, hierarchy name on the parent)
@@ -57,9 +59,18 @@ def ensure_child(parent, hierarchy_name, child):
 
 def ensure_stream(alias, asset, property_name):
     prop_id = next(
-        p["id"] for p in asset["assetProperties"] if p["name"] == property_name
+        (p["id"] for p in asset["assetProperties"] if p["name"] == property_name), None
     )
-    ts = sw.describe_time_series(alias=alias)
+    if prop_id is None:
+        sys.exit(f"unknown property {property_name!r} on {asset['assetName']} ({alias})")
+    try:
+        ts = sw.describe_time_series(alias=alias)
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "ResourceNotFoundException":
+            raise
+        # The gateway hasn't published this tag yet; a later run will bind it
+        print(f"  skipping {alias}: no data stream yet")
+        return
     if ts.get("assetId") == asset["assetId"] and ts.get("propertyId") == prop_id:
         return
     print(f"  binding {alias} -> {asset['assetName']}.{property_name}")

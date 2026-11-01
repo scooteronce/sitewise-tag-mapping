@@ -1,11 +1,13 @@
 # cleanup_tags.py: tear down everything sync_tags.py created, driven by the same CSV
 import csv
+import os
 import sys
 
 import boto3
 from botocore.exceptions import ClientError
 
-sw = boto3.client("iotsitewise")
+# boto3 only reads AWS_DEFAULT_REGION on its own; also honor AWS_REGION like the CLI does
+sw = boto3.client("iotsitewise", region_name=os.environ.get("AWS_REGION"))
 LEVELS = ["site", "area", "line", "equipment"]
 
 
