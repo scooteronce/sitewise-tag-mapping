@@ -41,3 +41,12 @@ aws cloudformation delete-stack --stack-name sitewise-asset-models
 ```
 
 `cleanup_tags.py` deletes the data streams listed in `tag-map.csv`, including their stored history, and the assets created from it. Run it before deleting the stack; the asset models can't be deleted while assets still use them.
+
+## Tests
+
+The tests run offline. Every SiteWise call is stubbed with botocore's `Stubber`, which checks each request against the real API schema, so no AWS account or credentials are needed.
+
+```bash
+pip install -r requirements.txt
+pytest tests/ --cov=sync_tags --cov=cleanup_tags --cov=simulate_tags --cov-report=term-missing
+```
